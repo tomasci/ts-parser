@@ -3,6 +3,7 @@ import {IPagesCount} from "./@types/IPagesCount"
 import JsonStorage from "./JsonStorage/JsonStorage"
 import Logger from "./Logger/Logger"
 import {JSDOM} from "jsdom"
+import {db} from "./Database/Database"
 
 const jsonStorage = new JsonStorage()
 const logger = new Logger()
@@ -37,9 +38,9 @@ function startupCheck(): boolean {
 /**
  * @return Promise<number> of pages
  */
-async function getPagesCount(): Promise<number> {
+async function getPagesCount(startFrom: number): Promise<number> {
 	let error = false
-	let counter = 29
+	let counter = startFrom
 
 	logger.log("Pages count update started")
 
@@ -69,14 +70,21 @@ async function getPagesCount(): Promise<number> {
 }
 
 async function updatePagesCount() {
-	const totalPages: number = await getPagesCount()
-	const data: IPagesCount = {
-		date: Date.now(),
-		count: totalPages,
+	const oldData: IPagesCount = jsonStorage.get("pagesCount")
+	const totalPages: number = await getPagesCount(oldData.count)
+
+	if (totalPages > oldData.count) {
+		const data: IPagesCount = {
+			date: Date.now(),
+			count: totalPages,
+		}
+
+		return jsonStorage.set("pagesCount", data)
 	}
 
-	// return saveFileJson(config.dataDir, config.pagesCountFile, data)
-	return jsonStorage.set("pagesCount", data)
+	logger.log("Pages count not changed, nothing to do")
+
+	return false
 }
 
 async function parseAllLinks() {
@@ -105,14 +113,19 @@ async function parsePage(pageNumber: number) {
 	)
 
 	const root = new JSDOM(page.data)
-	const links: NodeListOf<HTMLAnchorElement> =
-		root.window.document.querySelectorAll("a.listRecipieTitle")
+	return root.window.document.querySelectorAll("a.listRecipieTitle") as NodeListOf<HTMLAnchorElement>
+}
 
-	return links
+async function databaseCheck() {
+	const result = await db.$queryRaw`SELECT version()`
+	logger.log("Database check:", JSON.stringify(result))
 }
 
 async function start() {
 	logger.log("Application started")
+
+	await databaseCheck()
+
 	if (!startupCheck()) {
 		logger.log("Startup check failed")
 		if (await updatePagesCount()) {

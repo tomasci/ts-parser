@@ -5,7 +5,6 @@ uploads/extracted
 uploads/source
 uploads/og_images
 prisma/client
-data
 
 # Keep environment variables out of version control
 .env

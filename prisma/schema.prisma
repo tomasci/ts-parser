@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model images {
+  id         Int     @id @default(autoincrement())
+  post_id    Int?
+  image_path String? @db.Text
+  posts      posts?  @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "images_post_id_fk_posts_id")
+
+  @@index([post_id], map: "images_post_id_fk_posts_id")
+}
+
+model ingredients {
+  id                 Int     @id @default(autoincrement())
+  post_id            Int?
+  ingredient_name    String? @db.Text
+  ingredient_details String? @db.Text
+  posts              posts?  @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "ingredients_post_id_fk_posts_id")
+
+  @@index([post_id], map: "ingredients_post_id_fk_posts_id")
+}
+
+model posts {
+  id          Int           @id @default(autoincrement())
+  link        String?       @db.Text
+  post_title  String?       @db.Text
+  post_recipe String?       @db.LongText
+  images      images[]
+  ingredients ingredients[]
+}
