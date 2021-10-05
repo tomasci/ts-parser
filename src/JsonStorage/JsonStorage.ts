@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import {IJSConfig, IJsonStorage} from "../@types/JsonStorage/IJsonStorage"
+import Logger from "../Logger/Logger"
 
 /**
  * JsonStorage is simple class that allows to save and read any data to files,
@@ -10,6 +11,7 @@ import {IJSConfig, IJsonStorage} from "../@types/JsonStorage/IJsonStorage"
  * @implements {IJsonStorage}
  */
 class JsonStorage implements IJsonStorage {
+	private _logger: Logger = new Logger()
 	private _config: IJSConfig = {
 		dir: path.resolve("data"),
 	}
@@ -20,6 +22,7 @@ class JsonStorage implements IJsonStorage {
 	 */
 	constructor(config?: IJSConfig) {
 		config ? (this._config = config) : null
+		// todo: check if dir exists
 	}
 
 	/**
@@ -35,7 +38,9 @@ class JsonStorage implements IJsonStorage {
 			)
 			return JSON.parse(data)
 		} catch (e) {
-			console.log("JsonStorage: something went wrong while reading data")
+			this._logger.log(
+				"JsonStorage: something went wrong while reading data"
+			)
 			return <T>{}
 		}
 	}
@@ -54,7 +59,9 @@ class JsonStorage implements IJsonStorage {
 			)
 			return true
 		} catch (e) {
-			console.log("JsonStorage: something went wrong while saving data")
+			this._logger.log(
+				"JsonStorage: something went wrong while saving data"
+			)
 			return false
 		}
 	}
