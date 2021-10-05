@@ -2,15 +2,31 @@ import fs from "fs"
 import path from "path"
 import {IJSConfig, IJsonStorage} from "../@types/JsonStorage/IJsonStorage"
 
+/**
+ * JsonStorage is simple class that allows to save and read any data to files,
+ * but works like localStorage
+ *
+ * @class
+ * @implements {IJsonStorage}
+ */
 class JsonStorage implements IJsonStorage {
 	private _config: IJSConfig = {
 		dir: path.resolve("data"),
 	}
 
+	/**
+	 * JsonStorage constructor
+	 * @param config {IJSConfig} - configuration
+	 */
 	constructor(config?: IJSConfig) {
 		config ? (this._config = config) : null
 	}
 
+	/**
+	 * Read json data from file
+	 * @param key - filename
+	 * @return T file content or false
+	 */
 	public get<T>(key: string): T {
 		try {
 			const data = fs.readFileSync(
@@ -24,6 +40,11 @@ class JsonStorage implements IJsonStorage {
 		}
 	}
 
+	/**
+	 * Save json data to file
+	 * @param key - filename
+	 * @param value - json data
+	 */
 	public set<T>(key: string, value: T): boolean {
 		try {
 			fs.writeFileSync(

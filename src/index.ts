@@ -1,15 +1,8 @@
 import axios from "axios"
-import * as fs from "fs"
-import path from "path"
 import {IPagesCount} from "./@types/IPagesCount"
 import JsonStorage from "./JsonStorage/JsonStorage"
 
 const jsonStorage = new JsonStorage()
-
-// const config = {
-// 	dataDir: "data",
-// 	pagesCountFile: "pagesCount.json",
-// }
 
 function isEmptyObject<T>(obj: T): boolean {
 	return (
@@ -19,42 +12,7 @@ function isEmptyObject<T>(obj: T): boolean {
 	)
 }
 
-// /**
-//  * Read file function
-//  * @param dir - directory to read (relative to project root)
-//  * @param file - file in directory
-//  * @return T file content or false
-//  */
-// function readFileJson<T>(dir: string, file: string): T {
-// 	dir = path.resolve(dir)
-//
-// 	try {
-// 		const data = fs.readFileSync(dir + "/" + file, "utf-8")
-// 		return JSON.parse(data)
-// 	} catch (e) {
-// 		console.log("Error while reading file")
-// 		return <T>{}
-// 	}
-// }
-//
-// function saveFileJson<T>(dir: string, file: string, data: T): boolean {
-// 	dir = path.resolve(dir)
-//
-// 	try {
-// 		fs.writeFileSync(dir + "/" + file, JSON.stringify(data), "utf-8")
-// 		return true
-// 	} catch (e) {
-// 		console.log("Error while writing file")
-// 		return false
-// 	}
-// }
-
 function startupCheck(): boolean {
-	// const file: IPagesCount = readFileJson(
-	// 	config.dataDir,
-	// 	config.pagesCountFile
-	// )
-
 	const file: IPagesCount = jsonStorage.get("pagesCount")
 
 	if (!isEmptyObject(file)) {
