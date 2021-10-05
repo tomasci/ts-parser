@@ -1,0 +1,12 @@
+node_modules
+dist
+uploads/_temp
+uploads/extracted
+uploads/source
+uploads/og_images
+prisma/client
+data
+
+# Keep environment variables out of version control
+.env
+.DS_Store
