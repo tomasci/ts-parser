@@ -3,11 +3,12 @@ import Logger from "../Logger/Logger"
 import {db} from "../Database/Database"
 import axios from "axios"
 import {JSDOM} from "jsdom"
+import {IRecipeObject} from "../@types/Parser/IRecipeObject"
 
 const jsonStorage = new JsonStorage()
 const logger = new Logger()
 
-async function RecipeParser() {
+async function RecipeParser(): Promise<void> {
 	await parseAllLinks()
 }
 
@@ -26,7 +27,9 @@ async function parseAllLinks() {
 				linksData.length.toString()
 			)
 
-			await parseRecipe(link)
+			const recipe = await parseRecipe(link)
+			await insertIntoDatabase(link, recipe)
+			// console.log(insert)
 		} else {
 			logger.log(
 				"Skip link:",
@@ -52,7 +55,7 @@ async function parseRecipe(link: string) {
 	const page = await axios.get(`https://povar.ru${link}`)
 	const root = new JSDOM(page.data)
 
-	const post = {
+	const post: IRecipeObject = {
 		title: "",
 		ingredients: [],
 		steps: [],
@@ -71,7 +74,14 @@ async function parseRecipe(link: string) {
 
 	ingredients.forEach((ingredient) => {
 		const line = ingredient.textContent.split("—").map((item) => {
-			return item.trim()
+			return item
+				.replace(/&nbsp;/g, " ")
+				.replace(" ", " ")
+				.replace(
+					/[^а-яА-Я0-9-.,()/=+!@#$%^*_"№:|£€∞√'`—«»–}{~?><]/g,
+					" "
+				)
+				.trim()
 		})
 
 		post.ingredients.push({
@@ -108,6 +118,61 @@ async function parseRecipe(link: string) {
 	// console.log(post)
 
 	return post
+}
+
+async function insertIntoDatabase(link: string, recipe: IRecipeObject) {
+	// first of all insert post
+	const insertPost = await db.posts.create({
+		data: {
+			link: link,
+			post_title: recipe.title,
+			post_recipe: recipe.steps_joined,
+		},
+	})
+
+	// prepare ingredients
+	const preparedIngredients = []
+	recipe.ingredients.forEach((ingredient) => {
+		preparedIngredients.push({
+			post_id: insertPost.id,
+			ingredient_name: ingredient.name,
+			ingredient_details: ingredient.details,
+		})
+	})
+
+	// prepare steps
+	const preparedSteps = []
+	recipe.steps.forEach((step) => {
+		preparedSteps.push({
+			post_id: insertPost.id,
+			step_content: step,
+		})
+	})
+
+	// insert ingredients
+	const insertIngredients = await db.ingredients.createMany({
+		data: preparedIngredients,
+	})
+
+	// insert steps
+	const insertSteps = await db.steps.createMany({
+		data: preparedSteps,
+	})
+
+	// insert image
+	const insertImage = await db.images.create({
+		data: {
+			post_id: insertPost.id,
+			image_path: recipe.images[0],
+		},
+	})
+
+	return {
+		insertPost,
+		insertIngredients,
+		insertSteps,
+		insertImage,
+	}
 }
 
 export default RecipeParser

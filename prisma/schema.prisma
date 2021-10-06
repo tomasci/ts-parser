@@ -11,7 +11,7 @@ model images {
   id         Int     @id @default(autoincrement())
   post_id    Int?
   image_path String? @db.Text
-  posts      posts?  @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "images_post_id_fk_posts_id")
+  posts      posts?  @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "images_post_id_fk_posts_id")
 
   @@index([post_id], map: "images_post_id_fk_posts_id")
 }
@@ -21,7 +21,7 @@ model ingredients {
   post_id            Int?
   ingredient_name    String? @db.Text
   ingredient_details String? @db.Text
-  posts              posts?  @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "ingredients_post_id_fk_posts_id")
+  posts              posts?  @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ingredients_post_id_fk_posts_id")
 
   @@index([post_id], map: "ingredients_post_id_fk_posts_id")
 }
@@ -40,7 +40,7 @@ model steps {
   id           Int     @id @default(autoincrement())
   post_id      Int?
   step_content String? @db.LongText
-  posts        posts?  @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "steps_post_id_fk_posts_id")
+  posts        posts?  @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "steps_post_id_fk_posts_id")
 
   @@index([post_id], map: "steps_post_id_fk_posts_id")
 }
