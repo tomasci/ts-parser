@@ -4,16 +4,15 @@ import JsonStorage from "./JsonStorage/JsonStorage"
 import Logger from "./Logger/Logger"
 import {JSDOM} from "jsdom"
 import {db} from "./Database/Database"
+import {isEmptyObject} from "./Utils/isEmptyObject"
+import RecipeParser from "./Parser/RecipeParser"
 
 const jsonStorage = new JsonStorage()
 const logger = new Logger()
 
-function isEmptyObject<T>(obj: T): boolean {
-	return (
-		obj &&
-		Object.keys(obj).length === 0 &&
-		Object.getPrototypeOf(obj) === Object.prototype
-	)
+async function databaseCheck() {
+	const result = await db.$queryRaw`SELECT version()`
+	logger.log("Database check:", JSON.stringify(result))
 }
 
 function startupCheck(): boolean {
@@ -33,6 +32,24 @@ function startupCheck(): boolean {
 		// if empty
 		return false
 	}
+}
+
+async function updatePagesCount() {
+	const oldData: IPagesCount = jsonStorage.get("pagesCount")
+	const totalPages: number = await getPagesCount(oldData.count)
+
+	if (totalPages > oldData.count) {
+		const data: IPagesCount = {
+			date: Date.now(),
+			count: totalPages,
+		}
+
+		return jsonStorage.set("pagesCount", data)
+	}
+
+	logger.log("Pages count not changed, nothing to do")
+
+	return false
 }
 
 /**
@@ -69,24 +86,6 @@ async function getPagesCount(startFrom: number): Promise<number> {
 	return counter - 1
 }
 
-async function updatePagesCount() {
-	const oldData: IPagesCount = jsonStorage.get("pagesCount")
-	const totalPages: number = await getPagesCount(oldData.count)
-
-	if (totalPages > oldData.count) {
-		const data: IPagesCount = {
-			date: Date.now(),
-			count: totalPages,
-		}
-
-		return jsonStorage.set("pagesCount", data)
-	}
-
-	logger.log("Pages count not changed, nothing to do")
-
-	return false
-}
-
 async function parseAllLinks() {
 	const pagesCountData: IPagesCount = jsonStorage.get("pagesCount")
 	const all: string[] = []
@@ -113,12 +112,9 @@ async function parsePage(pageNumber: number) {
 	)
 
 	const root = new JSDOM(page.data)
-	return root.window.document.querySelectorAll("a.listRecipieTitle") as NodeListOf<HTMLAnchorElement>
-}
-
-async function databaseCheck() {
-	const result = await db.$queryRaw`SELECT version()`
-	logger.log("Database check:", JSON.stringify(result))
+	return root.window.document.querySelectorAll(
+		"a.listRecipieTitle"
+	) as NodeListOf<HTMLAnchorElement>
 }
 
 async function start() {
@@ -135,6 +131,8 @@ async function start() {
 		}
 	}
 	logger.log("Startup check done")
+
+	await RecipeParser()
 }
 
 start().then(() => {

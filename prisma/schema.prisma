@@ -33,4 +33,14 @@ model posts {
   post_recipe String?       @db.LongText
   images      images[]
   ingredients ingredients[]
+  steps       steps[]
+}
+
+model steps {
+  id           Int     @id @default(autoincrement())
+  post_id      Int?
+  step_content String? @db.LongText
+  posts        posts?  @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "steps_post_id_fk_posts_id")
+
+  @@index([post_id], map: "steps_post_id_fk_posts_id")
 }
