@@ -12,7 +12,10 @@ async function RecipeParser(): Promise<void> {
 	await parseAllLinks()
 }
 
-async function parseAllLinks() {
+/**
+ * This function take every link from list and send it to parser, then into DB worker
+ */
+async function parseAllLinks(): Promise<void> {
 	const linksData: string[] = jsonStorage.get("links")
 
 	for (const link of linksData) {
@@ -41,7 +44,11 @@ async function parseAllLinks() {
 	}
 }
 
-async function doesLinkParsed(link: string) {
+/**
+ * This function check, does link already exist in database
+ * @param link - recipe url
+ */
+async function doesLinkParsed(link: string): Promise<boolean> {
 	const search = await db.posts.count({
 		where: {
 			link: link,
@@ -51,7 +58,12 @@ async function doesLinkParsed(link: string) {
 	return search > 0
 }
 
-async function parseRecipe(link: string) {
+/**
+ * This function takes link, get content from page and returns object with data ready to use
+ * @param link - link to parse
+ * @return Promise<IRecipeObject> with parsed data
+ */
+async function parseRecipe(link: string): Promise<IRecipeObject> {
 	const page = await axios.get(`https://povar.ru${link}`)
 	const root = new JSDOM(page.data)
 
@@ -176,6 +188,3 @@ async function insertIntoDatabase(link: string, recipe: IRecipeObject) {
 }
 
 export default RecipeParser
-
-// https://img.povar.ru/steps/41/83/ed/74/zapechyonnaya_grudka_indeiki-483979.jpg
-// https://img.povar.ru/steps/41/83/ed/74/zapechyonnaya_grudka_indeiki-483979.jpg
